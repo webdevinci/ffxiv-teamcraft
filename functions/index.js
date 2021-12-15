@@ -11,6 +11,8 @@ const firestore = admin.firestore();
 firestore.settings({ timestampsInSnapshots: true });
 const pubsub = new PubSub({ projectId: process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT });
 const commissionsCreatedTopic = pubsub.topic('commissions-created');
+const { BigQuery } = require('@google-cloud/bigquery');
+const { format, startOfMonth } = require('date-fns');
 
 const runtimeOpts = {
   timeoutSeconds: 120,
@@ -45,6 +47,40 @@ exports.firestoreCountReplaysCreate = functions.runWith(runtimeOpts).firestore.d
   return creationsRef.transaction(current => {
     return current + 1;
   }).then(() => null);
+});
+
+exports.billingData = functions.runWith(runtimeOpts).https.onRequest(async (req, res) => {
+  const bigquery = new BigQuery();
+  const todaySQL = `SELECT * FROM \`ffxivteamcraft.billing.gcp_billing_export_v1_015468_F287DE_7A1860\`
+                WHERE DATE(usage_start_time) = "${format(new Date(), 'yyyy-MM-dd')}"
+                AND cost > 0 AND usage.amount_in_pricing_units > 0`;
+
+  const [job] = await bigquery.createQueryJob({
+    query: todaySQL,
+    location: 'us-central1'
+  });
+
+  const [rows] = await job.getQueryResults();
+
+  const aggregated = rows.reduce((acc, row) => {
+    const key = `${row.service.description}:${row.sku.description}`;
+    if (!key.includes('Firestore')) {
+      return acc;
+    }
+    if ((row.usage.amount_in_pricing_units * row.cost) / row.currency_conversion_rate > 200) {
+      console.log(row.usage_start_time.value, row.usage.amount_in_pricing_units, row.cost, row.currency_conversion_rate);
+    }
+    let price = (row.usage.amount_in_pricing_units * row.cost) / row.currency_conversion_rate;
+    if (key.includes('Firestore') && ['Read Ops', 'Entity Writes', 'Entity Deletes'].some(op => key.includes(op))) {
+      price /= 100000;
+    }
+    return {
+      ...acc,
+      [key]: (acc[key] || 0) + price
+    };
+  }, {});
+
+  res.status(200).send(aggregated);
 });
 
 exports.desktopUpdater = functions.runWith(runtimeOpts).https.onRequest((req, res) => {
