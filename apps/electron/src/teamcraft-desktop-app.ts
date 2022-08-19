@@ -8,7 +8,7 @@ import { PacketCapture } from './pcap/packet-capture';
 import log from 'electron-log';
 import { Constants } from './constants';
 import { join } from 'path';
-import { parse } from 'url';
+import { format, parse } from 'url';
 
 export class TeamcraftDesktopApp {
 
@@ -140,6 +140,15 @@ export class TeamcraftDesktopApp {
       });
     });
 
-    loaderWindow.loadURL(join(__dirname, 'loader.html'));
+    const resolveHtmlPath = (htmlFileName) => {
+      const url = new URL(join(__dirname, htmlFileName));
+      url.pathname = htmlFileName;
+      return url.href;
+    };
+
+    loaderWindow.loadURL(format({
+      pathname: join(__dirname, 'loader.html'),
+      protocol: 'http',
+    }));
   }
 }

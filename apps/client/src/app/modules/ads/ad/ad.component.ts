@@ -44,6 +44,13 @@ export class AdComponent implements AfterViewInit, OnDestroy {
           });
         }
       };
+
+      // Ramp
+      const tycheCDNScript = document.createElement('script');
+      tycheCDNScript.id = 'tyche';
+      tycheCDNScript.async = true;
+      tycheCDNScript.setAttribute('src', 'https://cdn.intergient.com/ramp.js');
+      document.head.appendChild(tycheCDNScript);
     }
   }
 
@@ -68,22 +75,21 @@ export class AdComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     if (!this.platform.isOverlay()) {
-      // Tyche
-      const tycheCDNScript = document.createElement('script');
-      tycheCDNScript.id = 'tyche';
-      tycheCDNScript.setAttribute('src', 'https://cdn.intergi.com/hera/tyche.js');
-      document.head.appendChild(tycheCDNScript);
+      // const tycheCDNScript = document.createElement('script');
+      // tycheCDNScript.id = 'tyche';
+      // tycheCDNScript.setAttribute('src', 'https://cdn.intergient.com/ramp.js');
+      // document.head.appendChild(tycheCDNScript);
 
 
-      // // Ramp
-      (<any>window).ramp = (<any>window).ramp || {};
-      (<any>window).ramp.que = (<any>window).ramp.que || [];
-      const pwScript = document.createElement('script');
-      pwScript.setAttribute('src', `https://cdn.intergient.com/1024627/${this.platform.isDesktop() ? 73554 : 73498}/ramp_config.js`);
-      document.head.appendChild(pwScript);
-      const adScript = document.createElement('script');
-      adScript.setAttribute('src', 'https://cdn.intergient.com/ramp_core.js');
-      document.body.appendChild(adScript);
+      // // // Ramp
+      // (<any>window).ramp = (<any>window).ramp || {};
+      // (<any>window).ramp.que = (<any>window).ramp.que || [];
+      // const pwScript = document.createElement('script');
+      // pwScript.setAttribute('src', `https://cdn.intergient.com/1024627/${this.platform.isDesktop() ? 73554 : 73498}/ramp_config.js`);
+      // document.head.appendChild(pwScript);
+      // const adScript = document.createElement('script');
+      // adScript.setAttribute('src', 'https://cdn.intergient.com/ramp_core.js');
+      // document.body.appendChild(adScript);
     }
     this.addAd();
     this.loaded = true;
